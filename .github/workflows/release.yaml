@@ -1,0 +1,40 @@
+name: Release
+
+env:
+  POETRY_VERSION: "1.6.1"
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+rc[0-9]+"
+      - "[0-9]+.[0-9]+[ab][0-9]+"
+
+jobs:
+  release:
+    name: Release to PyPI
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Set up Poetry
+        run: |
+          pip install poetry==${{ env.POETRY_VERSION }}
+
+      # Note: If build and publish steps are ever separated, the version must
+      #       be set before building
+      - name: Publish package
+        env:
+          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          poetry version "${GITHUB_REF#refs/*/}"
+          poetry publish --build
